@@ -1,11 +1,24 @@
+export type Symbol = 'X' | 'O';
+
 export interface PlayerState {
     name: string;
-    symbol: 'X' | 'O';
+    symbol: Symbol;
 }
 
 export interface GameState {
     player1: PlayerState;
     player2: PlayerState;
-    currentPlayer: 'X' | 'O';
+    currentPlayer: Symbol | null;
     board: string[];
+    winner: Symbol | null;
+    draw: boolean;
+    winningCells: number[];
+}
+
+export interface PlaceSymbolRequest {
+    player1Name: string;
+    player2Name: string;
+    currentPlayer: Symbol | null;
+    board: string[];
+    cellIndex: number;
 }

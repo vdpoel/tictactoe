@@ -1,5 +1,6 @@
-import { Component, inject, output } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subject, finalize, takeUntil, timeout } from 'rxjs';
 import { GameService } from '../game.service';
 import { GameState } from '../models';
 
@@ -33,15 +34,34 @@ import { GameState } from '../models';
                 <p class="player-chip">{{ gameState.player2.name }} ({{ gameState.player2.symbol }})</p>
               </div>
 
-              <p class="turn-indicator">{{ currentPlayerName }}'s turn</p>
+              @if (showTurnIndicator) {
+                <p class="turn-indicator">{{ currentPlayerName }}'s turn</p>
+              }
+
+              @if (winnerName) {
+                <p class="result-indicator">{{ winnerName }} has won</p>
+              }
+
+              @if (gameState.draw) {
+                <p class="result-indicator">The game is a draw</p>
+              }
 
               <div class="board" aria-label="Game board">
                 @for (cell of gameState.board; track $index) {
-                  <div class="board-cell">{{ cell }}</div>
+                  <button
+                    type="button"
+                    class="board-cell"
+                    [class.winning-cell]="isWinningCell($index)"
+                    [attr.data-cell-index]="$index"
+                    [attr.aria-label]="'Board cell ' + ($index + 1)"
+                    [disabled]="moveInProgress || setupInProgress"
+                    (click)="placeSymbol($index)">
+                    {{ cell }}
+                  </button>
                 }
               </div>
 
-              <button type="button" class="secondary" (click)="restartGame()">New Game</button>
+              <button type="button" class="secondary" [disabled]="setupInProgress" (click)="restartGame()">New Game</button>
             </section>
           }
 
@@ -50,7 +70,7 @@ import { GameState } from '../models';
           }
 
           @if (!gameState) {
-            <button type="button" (click)="startGame()" [disabled]="!canStart">Start Game</button>
+            <button type="button" (click)="startGame()" [disabled]="!canStart || setupInProgress">Start Game</button>
           }
         </section>
     `,
@@ -176,16 +196,50 @@ import { GameState } from '../models';
             font-size: 1.5rem;
             font-weight: 700;
             color: #2f3d38;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+          }
+
+          .board-cell:not(:disabled):hover {
+            transform: translateY(-1px);
+            border-color: #9a6d38;
+            box-shadow: 0 0.5rem 1rem rgba(53, 43, 28, 0.08);
+          }
+
+          .board-cell:disabled {
+            cursor: wait;
+          }
+
+          .winning-cell {
+            background: #dff6c8;
+            border-color: #70a64a;
+            box-shadow: inset 0 0 0 2px rgba(112, 166, 74, 0.35);
+          }
+
+          .result-indicator {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #9a6d38;
         }
     `],
 })
 export class PlayerSetupComponent {
     private readonly gameService = inject(GameService);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly cancelMoveRequests$ = new Subject<void>();
+  private setupRequestId = 0;
 
     player1Name = '';
     player2Name = '';
     errorMessage = '';
     gameState: GameState | null = null;
+    moveInProgress = false;
+    setupInProgress = false;
+    currentPlayerName = '';
+    winnerName = '';
+    showTurnIndicator = false;
 
     readonly gameStarted = output<GameState>();
 
@@ -193,40 +247,126 @@ export class PlayerSetupComponent {
         return this.player1Name.trim().length > 0 && this.player2Name.trim().length > 0;
     }
 
-    get currentPlayerName(): string {
-      if (!this.gameState) {
-        return '';
-      }
-
-      return this.gameState.currentPlayer === 'X'
-        ? this.gameState.player1.name
-        : this.gameState.player2.name;
-    }
-
     startGame(): void {
-      this.setupGame();
-    }
-
-    restartGame(): void {
-      this.setupGame();
-    }
-
-    private setupGame(): void {
       if (!this.canStart) {
         return;
       }
 
+      this.setupGame(this.player1Name.trim(), this.player2Name.trim(), false);
+    }
+
+    restartGame(): void {
+      const player1 = this.gameState?.player1.name ?? this.player1Name.trim();
+      const player2 = this.gameState?.player2.name ?? this.player2Name.trim();
+      if (!player1 || !player2) {
+        this.errorMessage = 'Both player names are required to start a new game.';
+        return;
+      }
+
+      this.setupGame(player1, player2, true);
+    }
+
+    placeSymbol(cellIndex: number): void {
+      if (!this.gameState || this.moveInProgress || this.setupInProgress) {
+        return;
+      }
+
       this.errorMessage = '';
-      this.gameService.setupGame(this.player1Name.trim(), this.player2Name.trim()).subscribe({
+      this.moveInProgress = true;
+
+      this.gameService.placeSymbol(this.gameState, cellIndex)
+        .pipe(timeout(8000))
+        .pipe(takeUntil(this.cancelMoveRequests$))
+        .pipe(finalize(() => {
+          this.moveInProgress = false;
+          this.changeDetectorRef.detectChanges();
+        }))
+        .subscribe({
+          next: (state) => {
+            this.applyGameState(state);
+            this.changeDetectorRef.detectChanges();
+          },
+          error: (err) => {
+            this.errorMessage = err.error?.message ?? 'Failed to place symbol. The move request timed out or could not reach the server.';
+            this.changeDetectorRef.detectChanges();
+          },
+        });
+    }
+
+    private setupGame(player1Name: string, player2Name: string, isRestart: boolean): void {
+      // Ensure stale move responses cannot overwrite a newly started game.
+      this.cancelMoveRequests$.next();
+      this.errorMessage = '';
+      this.moveInProgress = false;
+      this.setupInProgress = true;
+      const requestId = ++this.setupRequestId;
+
+      if (isRestart) {
+        this.applyGameState(this.createInitialGameState(player1Name, player2Name));
+      }
+
+      this.gameService.setupGame(player1Name, player2Name)
+        .pipe(timeout(8000))
+        .pipe(finalize(() => {
+          if (requestId === this.setupRequestId) {
+            this.setupInProgress = false;
+            this.changeDetectorRef.detectChanges();
+          }
+        }))
+        .subscribe({
         next: (state) => {
-          this.gameState = state;
+          if (requestId !== this.setupRequestId) {
+            return;
+          }
+          this.applyGameState(state);
           this.player1Name = state.player1.name;
           this.player2Name = state.player2.name;
           this.gameStarted.emit(state);
+          this.changeDetectorRef.detectChanges();
         },
         error: (err) => {
-          this.errorMessage = err.error?.message ?? 'Failed to start the game. Please try again.';
+          if (requestId !== this.setupRequestId) {
+            return;
+          }
+          this.errorMessage = err.error?.message ?? 'Failed to start the game. The request timed out or could not reach the server.';
+          this.changeDetectorRef.detectChanges();
         },
       });
+    }
+
+    private createInitialGameState(player1Name: string, player2Name: string): GameState {
+      return {
+        player1: { name: player1Name, symbol: 'X' },
+        player2: { name: player2Name, symbol: 'O' },
+        currentPlayer: 'X',
+        board: ['', '', '', '', '', '', '', '', ''],
+        winner: null,
+        draw: false,
+        winningCells: [],
+      };
+    }
+
+    applyGameState(state: GameState): void {
+      const normalizedState: GameState = {
+        ...state,
+        winningCells: Array.isArray(state.winningCells) ? state.winningCells : [],
+      };
+
+      this.gameState = normalizedState;
+      this.currentPlayerName = normalizedState.currentPlayer === 'X'
+        ? normalizedState.player1.name
+        : normalizedState.currentPlayer === 'O'
+          ? normalizedState.player2.name
+          : '';
+      this.winnerName = normalizedState.winner === 'X'
+        ? normalizedState.player1.name
+        : normalizedState.winner === 'O'
+          ? normalizedState.player2.name
+          : '';
+      this.showTurnIndicator = !normalizedState.winner && !normalizedState.draw && !!normalizedState.currentPlayer;
+    }
+
+    isWinningCell(index: number): boolean {
+      return !!this.gameState && this.gameState.winningCells.includes(index);
     }
 }
