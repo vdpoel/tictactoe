@@ -37,7 +37,8 @@ tasks.test {
     }
 }
 
-// BDD tests: run only the Cucumber engine
+// BDD tests: run only the Cucumber engine.
+// Dynamically resolves active feature files (excludes features/TODO/).
 val cucumberTest by tasks.registering(Test::class) {
     description = "Runs Cucumber BDD tests"
     group = "verification"
@@ -48,4 +49,12 @@ val cucumberTest by tasks.registering(Test::class) {
     }
     failOnNoDiscoveredTests = false
     shouldRunAfter(tasks.test)
+
+    val featuresDir = project.projectDir.parentFile.resolve("features")
+    val activeFeatures = featuresDir.walkTopDown()
+        .filter { it.isFile && it.name.endsWith(".feature") && it.parentFile.name != "TODO" }
+        .joinToString(",") { it.absolutePath }
+    if (activeFeatures.isNotBlank()) {
+        systemProperty("cucumber.features", activeFeatures)
+    }
 }

@@ -1,9 +1,10 @@
+process.env['TS_NODE_PROJECT'] = './tsconfig.cucumber.json';
+
 module.exports = {
     default: {
-        features: ['e2e/features/**/*.feature'],
-        require: ['e2e/step-definitions/**/*.ts'],
-        requireModule: ['ts-node/register'],
+        paths: ['../features/*.feature'],
+        require: ['e2e/support/setup.ts', 'e2e/step-definitions/**/*.ts'],
+        requireModule: ['ts-node/esm'],
         format: ['progress-bar', 'html:reports/cucumber-report.html'],
-        publishQuiet: true,
     },
 };

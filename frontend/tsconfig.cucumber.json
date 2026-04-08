@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./out-tsc/cucumber"
+  },
+  "include": [
+    "e2e/**/*.ts",
+    "e2e/**/*.d.ts"
+  ]
+}

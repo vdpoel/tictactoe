@@ -45,10 +45,26 @@ Feature: Player setup and symbol assignment
     And Bob is assigned symbol "O"
     And it is Alice's turn
 
-  Scenario: Prevent starting game without player names
+  Scenario: Prevent starting game without first player name
     Given the game has not started yet
     And Player 1 name is empty
-    Or Player 2 name is empty
+    And Player 2 name is Bob
+    When the player attempts to start the game
+    Then the game does not start
+    And a message is shown asking for both player name
+  
+  Scenario: Prevent starting game without second player name
+    Given the game has not started yet
+    And Player 1 name is Alice
+    And Player 2 name is empty
+    When the player attempts to start the game
+    Then the game does not start
+    And a message is shown asking for both player name
+
+  Scenario: Prevent starting game without both player names
+    Given the game has not started yet
+    And Player 1 name is Alice
+    And Player 2 name is empty
     When the player attempts to start the game
     Then the game does not start
     And a message is shown asking for both player names
