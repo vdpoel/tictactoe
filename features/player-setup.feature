@@ -45,6 +45,22 @@ Feature: Player setup and symbol assignment
     And Bob is assigned symbol "O"
     And it is Alice's turn
 
+  Scenario: Start Game button is disabled until both names are filled in
+    Given the game has not started yet
+    When Player 1 enters the name "Alice"
+    And Player 2 name is empty
+    Then the Start Game button is disabled
+    When Player 2 enters the name "Bob"
+    Then the Start Game button is enabled
+
+  Scenario: Start Game button is replaced by the game board after starting
+    Given the game has not started yet
+    When Player 1 enters the name "Alice"
+    And Player 2 enters the name "Bob"
+    And the player clicks the "Start Game" button
+    Then the Start Game button is no longer visible
+    And the game board is visible
+
   Scenario: Prevent starting game without first player name
     Given the game has not started yet
     And Player 1 name is empty

@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { ctx, setInputValue, startGameWithState, startButton, textContent, gameBoardInstance } from './world';
+import { ctx, setInputValue, startGameWithState, startButton, newGameButton, flushGameSetup, textContent, boardCells, gameBoardInstance } from './world';
 
 // Scenario: Players can enter their names before starting the game
 // (uses shared: theGameHasNotStartedYet → see bottom)
@@ -161,6 +161,52 @@ Given(/^a game has been played with players "([^"]+)" \(X\) and "([^"]+)" \(O\)$
         player2: { name: player2, symbol: 'O' },
         board: ['X', 'O', 'X', '', '', '', '', '', ''],
     });
+});
+
+// Scenario: Start Game button is replaced by the game board after starting
+
+When('the player clicks the {string} button', function (buttonName: string) {
+    if (buttonName === 'Start Game') {
+        startGameWithState();
+        return;
+    }
+
+    if (buttonName !== 'New Game') {
+        throw new Error(`Unsupported button: ${buttonName}`);
+    }
+
+    newGameButton().click();
+    flushGameSetup();
+});
+
+Then('the Start Game button is no longer visible', function () {
+    const button = startButton();
+    if (button && !button.disabled && button.textContent?.includes('Start Game')) {
+        throw new Error('Expected Start Game button to no longer be visible');
+    }
+});
+
+Then('the game board is visible', function () {
+    const cells = boardCells();
+    if (cells.length !== 9) {
+        throw new Error(`Expected game board with 9 cells, got ${cells.length}`);
+    }
+});
+
+// Scenario: Start Game button is disabled until both names are filled in
+
+Then('the Start Game button is disabled', function () {
+    const button = startButton();
+    if (!button.disabled) {
+        throw new Error('Expected Start Game button to be disabled');
+    }
+});
+
+Then('the Start Game button is enabled', function () {
+    const button = startButton();
+    if (button.disabled) {
+        throw new Error('Expected Start Game button to be enabled');
+    }
 });
 
 // Scenarios: Prevent starting game without player name(s)

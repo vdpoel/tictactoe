@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { ctx, setInputValue, startGameWithState, clickBoardCell, flushPlaceSymbol, newGameButton, flushGameSetup, patchGameState } from './world';
+import { ctx, setInputValue, startGameWithState, clickBoardCell, flushPlaceSymbol, patchGameState } from './world';
 
 // ── Steps used in two or more feature files ───────────────────────────────────
 
@@ -43,17 +43,6 @@ When('the game screen is displayed', function () {
     }
 
     ctx.fixture.detectChanges();
-});
-
-// Used by: player-setup, new-game
-
-When('the player clicks the {string} button', function (buttonName: string) {
-    if (buttonName !== 'New Game') {
-        throw new Error(`Unsupported button: ${buttonName}`);
-    }
-
-    newGameButton().click();
-    flushGameSetup();
 });
 
 // Used by: winner-detection, draw-detection

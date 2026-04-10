@@ -146,6 +146,32 @@ public class PlayerSetupStepDefs {
         ctx.callSetupApi();
     }
 
+    // Scenario: Start Game button is replaced by the game board after starting
+
+    @Then("the Start Game button is no longer visible")
+    public void theStartGameButtonIsNoLongerVisible() throws Exception {
+        ctx.result.andExpect(status().isOk());
+    }
+
+    @Then("the game board is visible")
+    public void theGameBoardIsVisible() throws Exception {
+        ctx.result.andExpect(jsonPath("$.board").isArray());
+    }
+
+    // Scenario: Start Game button is disabled until both names are filled in
+
+    @Then("the Start Game button is disabled")
+    public void theStartGameButtonIsDisabled() throws Exception {
+        ctx.callSetupApi();
+        ctx.result.andExpect(status().isBadRequest());
+    }
+
+    @Then("the Start Game button is enabled")
+    public void theStartGameButtonIsEnabled() throws Exception {
+        ctx.callSetupApi();
+        ctx.result.andExpect(status().isOk());
+    }
+
     // Scenarios: Prevent starting game without player name(s)
     // (uses shared: theGameHasNotStartedYet, playerNameIs, thePlayerAttemptsToStartTheGame,
     //               theGameDoesNotStart, aMessageIsShownAskingForBothPlayerNames → see bottom)
