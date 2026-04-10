@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { ctx, setInputValue, startGameWithState, clickBoardCell, flushPlaceSymbol, patchGameState } from './world';
+import { ctx, setInputValue, startGameWithState, clickBoardCell, flushPlaceSymbol, patchGameState, gameBoardInstance } from './world';
 
 // Scenario: Show Player X turn at the start of a new game
 // (uses shared: theGameBoardIsDisplayed → see bottom)
@@ -11,8 +11,8 @@ Given('a new Tic Tac Toe game has started', function () {
 });
 
 Then('the screen should show that it is Player X\'s turn', function () {
-    if (ctx.fixture.componentInstance.currentPlayerName !== 'Alice' || !ctx.fixture.componentInstance.showTurnIndicator) {
-        throw new Error(`Expected the X player turn to be shown, got "${ctx.fixture.componentInstance.currentPlayerName}"`);
+    if (gameBoardInstance().currentPlayerName !== 'Alice' || !gameBoardInstance().showTurnIndicator) {
+        throw new Error(`Expected the X player turn to be shown, got "${gameBoardInstance().currentPlayerName}"`);
     }
 });
 
@@ -31,8 +31,8 @@ When('Player X places a mark on an empty cell', function () {
 });
 
 Then('the screen should show that it is Player O\'s turn', function () {
-    if (ctx.fixture.componentInstance.currentPlayerName !== 'Bob' || !ctx.fixture.componentInstance.showTurnIndicator) {
-        throw new Error(`Expected the O player turn to be shown, got "${ctx.fixture.componentInstance.currentPlayerName}"`);
+    if (gameBoardInstance().currentPlayerName !== 'Bob' || !gameBoardInstance().showTurnIndicator) {
+        throw new Error(`Expected the O player turn to be shown, got "${gameBoardInstance().currentPlayerName}"`);
     }
 });
 
@@ -58,7 +58,7 @@ When('the players look at the game screen', function () {
 });
 
 Then('the current player\'s turn should be visible', function () {
-    if (!ctx.fixture.componentInstance.showTurnIndicator || !ctx.fixture.componentInstance.currentPlayerName) {
+    if (!gameBoardInstance().showTurnIndicator || !gameBoardInstance().currentPlayerName) {
         throw new Error('Expected the turn indicator to be visible');
     }
 });
@@ -86,13 +86,13 @@ When('Player X places a mark on an empty cell and wins the game', function () {
 });
 
 Then('the screen should show that Player X has won', function () {
-    if (ctx.fixture.componentInstance.winnerName !== 'Alice') {
+    if (gameBoardInstance().winnerName !== 'Alice') {
         throw new Error('Expected a winner message for Player X');
     }
 });
 
 Then('the screen should not show that it is Player O\'s turn', function () {
-    if (ctx.fixture.componentInstance.showTurnIndicator || ctx.fixture.componentInstance.currentPlayerName === 'Bob') {
+    if (gameBoardInstance().showTurnIndicator || gameBoardInstance().currentPlayerName === 'Bob') {
         throw new Error('Did not expect Player O turn text after the game was won');
     }
 });
@@ -129,7 +129,7 @@ Then('the screen should show that the game is a draw', function () {
 });
 
 Then('the screen should not show that it is Player X\'s turn', function () {
-    if (ctx.fixture.componentInstance.showTurnIndicator || ctx.fixture.componentInstance.currentPlayerName === 'Alice') {
+    if (gameBoardInstance().showTurnIndicator || gameBoardInstance().currentPlayerName === 'Alice') {
         throw new Error('Did not expect Player X turn text after the draw');
     }
 });

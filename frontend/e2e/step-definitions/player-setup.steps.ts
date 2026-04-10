@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { ctx, setInputValue, startGameWithState, startButton, textContent } from './world';
+import { ctx, setInputValue, startGameWithState, startButton, textContent, gameBoardInstance } from './world';
 
 // Scenario: Players can enter their names before starting the game
 // (uses shared: theGameHasNotStartedYet → see bottom)
@@ -46,7 +46,7 @@ Given('Player 1 is {string} with symbol {string}', function (name: string, _symb
             player1: { ...ctx.lastGameState.player1, name },
         };
         ctx.fixture.componentInstance.player1Name = name;
-        ctx.fixture.componentInstance.applyGameState(ctx.lastGameState);
+        gameBoardInstance().applyGameState(ctx.lastGameState);
         ctx.fixture.detectChanges();
         return;
     }
@@ -61,7 +61,7 @@ Given('Player 2 is {string} with symbol {string}', function (name: string, _symb
             player2: { ...ctx.lastGameState.player2, name },
         };
         ctx.fixture.componentInstance.player2Name = name;
-        ctx.fixture.componentInstance.applyGameState(ctx.lastGameState);
+        gameBoardInstance().applyGameState(ctx.lastGameState);
         ctx.fixture.detectChanges();
         return;
     }

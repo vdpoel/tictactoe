@@ -43,3 +43,8 @@ Feature: Place symbol on the board
     Given it is Bob's turn (O) and a cell contains an X placed by Alice
     When Bob clicks on that occupied cell
     Then no symbol is placed, the X remains in the cell and it stays Bob's turn
+
+  Scenario: Server rejects a move when the board already shows a winning combination
+    Given the board already shows X winning in the top row but currentPlayer is still set to X
+    When a player attempts to place a symbol in an empty cell
+    Then the move is rejected, X remains the winner and the game is over

@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { ctx, setInputValue, startGameWithState, newGameButton, snapshotState } from './world';
+import { ctx, setInputValue, startGameWithState, newGameButton, snapshotState, gameBoardInstance } from './world';
 
 // Scenario: New Game button is visible
 // (uses shared: theGameScreenIsDisplayed → shared.steps.ts)
@@ -68,7 +68,7 @@ Then('any winner or draw message is removed', function () {
 });
 
 Then('no result is displayed', function () {
-    if (ctx.fixture.componentInstance.winnerName || ctx.lastGameState?.draw) {
+    if (gameBoardInstance().winnerName || ctx.lastGameState?.draw) {
         throw new Error('Expected no result to be displayed');
     }
 });

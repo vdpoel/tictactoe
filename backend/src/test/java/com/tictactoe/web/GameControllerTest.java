@@ -86,10 +86,10 @@ class GameControllerTest {
     }
 
     @Test
-    void placeSymbol_returnsUpdatedGameState() throws Exception {
+    void placeSymbol_returnsUpdatedMoveState() throws Exception {
         GameState updatedState = new GameState(
-                new Player("Alice", Symbol.X),
-                new Player("Bob", Symbol.O),
+                new Player("X", Symbol.X),
+                new Player("O", Symbol.O),
                 Symbol.O,
                 List.of("X", "", "", "", "", "", "", "", ""),
                 null,
@@ -98,8 +98,8 @@ class GameControllerTest {
         );
         when(gameApplicationService.placeSymbol(
                 new GameState(
-                        new Player("Alice", Symbol.X),
-                        new Player("Bob", Symbol.O),
+                        new Player("X", Symbol.X),
+                        new Player("O", Symbol.O),
                         Symbol.X,
                         List.of("", "", "", "", "", "", "", "", ""),
                         null,
@@ -113,8 +113,6 @@ class GameControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "player1Name": "Alice",
-                                  "player2Name": "Bob",
                                   "currentPlayer": "X",
                                   "board": ["", "", "", "", "", "", "", "", ""],
                                   "cellIndex": 0
@@ -123,7 +121,7 @@ class GameControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.board[0]").value("X"))
                 .andExpect(jsonPath("$.currentPlayer").value("O"))
-                                .andExpect(jsonPath("$.winner").value(nullValue()))
+                .andExpect(jsonPath("$.winner").value(nullValue()))
                 .andExpect(jsonPath("$.draw").value(false));
     }
 }

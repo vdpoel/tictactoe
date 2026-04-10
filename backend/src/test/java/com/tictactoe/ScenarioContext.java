@@ -58,15 +58,11 @@ public class ScenarioContext {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {
-                          "player1Name": "%s",
-                          "player2Name": "%s",
                           "currentPlayer": %s,
                           "board": ["%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s"],
                           "cellIndex": %s
                         }
                         """.formatted(
-                        player1Name,
-                        player2Name,
                         currentPlayer == null ? "null" : "\"%s\"".formatted(currentPlayer),
                         board.get(0), board.get(1), board.get(2),
                         board.get(3), board.get(4), board.get(5),

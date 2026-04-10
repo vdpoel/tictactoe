@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/game")
 public class GameController {
@@ -29,18 +30,18 @@ public class GameController {
     }
 
     @PostMapping("/move")
-    public ResponseEntity<GameStateResponse> placeSymbol(@RequestBody PlaceSymbolRequest request) {
+    public ResponseEntity<MoveResponse> placeSymbol(@RequestBody PlaceSymbolRequest request) {
         GameState gameState = new GameState(
-                new Player(request.player1Name(), Symbol.X),
-                new Player(request.player2Name(), Symbol.O),
+                new Player("X", Symbol.X),
+                new Player("O", Symbol.O),
                 request.currentPlayer(),
                 request.board(),
                 null,
-            false,
-            List.of()
+                false,
+                List.of()
         );
 
         GameState updatedState = gameApplicationService.placeSymbol(gameState, request.cellIndex());
-        return ResponseEntity.ok(GameStateResponse.from(updatedState));
+        return ResponseEntity.ok(MoveResponse.from(updatedState));
     }
 }

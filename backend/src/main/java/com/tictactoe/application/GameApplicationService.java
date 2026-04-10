@@ -37,18 +37,20 @@ public class GameApplicationService {
     }
 
     public GameState placeSymbol(GameState gameState, int cellIndex) {
-        List<Integer> existingWinningCells = determineWinningCells(gameState.board());
-        Symbol winner = winnerFromCells(gameState.board(), existingWinningCells);
-        boolean draw = winner == null && isBoardFull(gameState.board());
-        if (winner != null || draw || gameState.currentPlayer() == null) {
+        // Re-derive terminal state from the board so moves are always rejected on boards
+        // that already show a winner or are full, regardless of what currentPlayer claims.
+        List<Integer> boardWinningCells = determineWinningCells(gameState.board());
+        Symbol boardWinner = winnerFromCells(gameState.board(), boardWinningCells);
+        boolean boardDraw = boardWinner == null && isBoardFull(gameState.board());
+        if (boardWinner != null || boardDraw || gameState.currentPlayer() == null) {
             return new GameState(
                     gameState.player1(),
                     gameState.player2(),
                     null,
                     gameState.board(),
-                    winner,
-                    draw,
-                    existingWinningCells
+                    boardWinner,
+                    boardDraw,
+                    boardWinningCells
             );
         }
 
@@ -79,7 +81,7 @@ public class GameApplicationService {
 
         boolean updatedDraw = isBoardFull(updatedBoard);
         if (updatedDraw) {
-                return new GameState(
+            return new GameState(
                     gameState.player1(),
                     gameState.player2(),
                     null,
@@ -87,7 +89,7 @@ public class GameApplicationService {
                     null,
                     true,
                     List.of()
-                );
+            );
         }
 
         return new GameState(

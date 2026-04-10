@@ -1,6 +1,8 @@
 import { ComponentFixture } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
+import { By } from '@angular/platform-browser';
 import { PlayerSetupComponent } from '../../src/app/features/game/player-setup/player-setup.component';
+import { GameBoardComponent } from '../../src/app/features/game/game-board/game-board.component';
 import { GameState } from '../../src/app/features/game/models';
 
 // ── Shared world state ────────────────────────────────────────────────────────
@@ -15,6 +17,14 @@ export const ctx: {
 } = {} as never;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+export function gameBoardInstance(): GameBoardComponent {
+    const el = ctx.fixture.debugElement.query(By.directive(GameBoardComponent));
+    if (!el) {
+        throw new Error('GameBoardComponent not found — has the game started?');
+    }
+    return el.componentInstance as GameBoardComponent;
+}
 
 export function inputById(id: string): HTMLInputElement {
     return ctx.fixture.nativeElement.querySelector(`#${id}`) as HTMLInputElement;
@@ -50,7 +60,6 @@ export function flushGameSetup(state?: Partial<GameState>): void {
     const req = ctx.httpMock.expectOne('/api/game');
     req.flush(response);
     ctx.lastGameState = response;
-    ctx.fixture.componentInstance.applyGameState(response);
     ctx.fixture.detectChanges();
 }
 
@@ -72,7 +81,6 @@ export function flushPlaceSymbol(state?: Partial<GameState>): void {
     const req = ctx.httpMock.expectOne('/api/game/move');
     req.flush(response);
     ctx.lastGameState = response;
-    ctx.fixture.componentInstance.applyGameState(response);
 }
 
 export function startGameWithState(state?: Partial<GameState>): void {
@@ -95,7 +103,7 @@ export function boardCell(index: number): HTMLButtonElement {
 
 export function clickBoardCell(index: number): void {
     ctx.lastSelectedCellIndex = index;
-    ctx.fixture.componentInstance.placeSymbol(index);
+    gameBoardInstance().placeSymbol(index);
 }
 
 export function patchGameState(state: Partial<GameState>): void {
@@ -112,7 +120,7 @@ export function patchGameState(state: Partial<GameState>): void {
         currentPlayer: 'currentPlayer' in state ? state.currentPlayer! : ctx.lastGameState.currentPlayer,
         winningCells: state.winningCells ?? ctx.lastGameState.winningCells,
     };
-    ctx.fixture.componentInstance.applyGameState(ctx.lastGameState);
+    gameBoardInstance().applyGameState(ctx.lastGameState);
 }
 
 export function snapshotState(): void {

@@ -1,5 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import { ctx, setInputValue, startGameWithState, clickBoardCell, flushPlaceSymbol, patchGameState } from './world';
+import { ctx, setInputValue, startGameWithState, clickBoardCell, flushPlaceSymbol, patchGameState, gameBoardInstance } from './world';
 
 // Scenario: Display Player X symbol after clicking an empty cell
 // (uses shared: aGameIsInProgress → shared.steps.ts, itIsPlayerXsTurn → shared.steps.ts)
@@ -127,8 +127,45 @@ Then('no symbol is placed, the X remains in the cell and it stays Bob\'s turn', 
         throw new Error('Expected the existing X to remain in the occupied cell');
     }
 
-    if (ctx.fixture.componentInstance.currentPlayerName !== 'Bob' || !ctx.fixture.componentInstance.showTurnIndicator) {
+    if (gameBoardInstance().currentPlayerName !== 'Bob' || !gameBoardInstance().showTurnIndicator) {
         throw new Error('Expected it to remain Bob\'s turn');
+    }
+});
+
+// Scenario: Server rejects a move when the board already shows a winning combination
+
+Given('the board already shows X winning in the top row but currentPlayer is still set to X', function () {
+    setInputValue('player1', 'Alice');
+    setInputValue('player2', 'Bob');
+    startGameWithState({
+        board: ['X', 'X', 'X', 'O', 'O', '', '', '', ''],
+        currentPlayer: 'X',  // stale — game should already be over
+        winner: 'X',
+        winningCells: [0, 1, 2],
+    });
+    ctx.lastSelectedCellIndex = 5;
+});
+
+When('a player attempts to place a symbol in an empty cell', function () {
+    clickBoardCell(ctx.lastSelectedCellIndex);
+    flushPlaceSymbol({
+        board: ['X', 'X', 'X', 'O', 'O', '', '', '', ''],
+        currentPlayer: null,
+        winner: 'X',
+        draw: false,
+        winningCells: [0, 1, 2],
+    });
+});
+
+Then('the move is rejected, X remains the winner and the game is over', function () {
+    if (ctx.lastGameState?.board[5] !== '') {
+        throw new Error('Expected empty cell to remain empty after rejected move');
+    }
+    if (ctx.lastGameState?.winner !== 'X') {
+        throw new Error('Expected X to remain the winner');
+    }
+    if (ctx.lastGameState?.currentPlayer !== null) {
+        throw new Error('Expected game to be over (no current player)');
     }
 });
 

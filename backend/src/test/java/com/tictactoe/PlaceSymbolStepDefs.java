@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -98,6 +99,29 @@ public class PlaceSymbolStepDefs {
     public void noSymbolIsPlacedAndItStaysBobTurn() throws Exception {
         ctx.result.andExpect(jsonPath("$.board[0]").value("X"))
                 .andExpect(jsonPath("$.currentPlayer").value("O"));
+    }
+
+    // Scenario: Server rejects a move when the board already shows a winning combination
+
+    @Given("the board already shows X winning in the top row but currentPlayer is still set to X")
+    public void boardAlreadyShowsXWinningButCurrentPlayerStillX() {
+        ctx.player1Name = "Alice";
+        ctx.player2Name = "Bob";
+        ctx.board = new ArrayList<>(List.of("X", "X", "X", "O", "O", "", "", "", ""));
+        ctx.currentPlayer = "X"; // stale — game should already be over
+        ctx.selectedCellIndex = 5;
+    }
+
+    @When("a player attempts to place a symbol in an empty cell")
+    public void aPlayerAttemptsToPlaceASymbolInAnEmptyCell() throws Exception {
+        ctx.callMoveApi();
+    }
+
+    @Then("the move is rejected, X remains the winner and the game is over")
+    public void moveIsRejectedXRemainsWinnerAndGameIsOver() throws Exception {
+        ctx.result.andExpect(jsonPath("$.board[5]").value(""))
+                .andExpect(jsonPath("$.winner").value("X"))
+                .andExpect(jsonPath("$.currentPlayer").value(nullValue()));
     }
 
     // ── Shared steps (used by multiple scenarios above) ──────────────────────
