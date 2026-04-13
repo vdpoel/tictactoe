@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
 import { Subject, finalize, takeUntil, timeout } from 'rxjs';
 import { GameService } from '../game.service';
 import { GameState } from '../models';
@@ -11,64 +11,79 @@ import { GameState } from '../models';
     template: `
         <section class="game-screen">
             <div class="player-summary">
-                <p class="player-chip">{{ gameState.player1.name }} ({{ gameState.player1.symbol }})</p>
-                <p class="player-chip">{{ gameState.player2.name }} ({{ gameState.player2.symbol }})</p>
+                <p class="player-chip">{{ gameState().player1.name }} ({{ gameState().player1.symbol }})</p>
+                <p class="player-chip">{{ gameState().player2.name }} ({{ gameState().player2.symbol }})</p>
             </div>
 
-            @if (showTurnIndicator) {
-                <p class="turn-indicator">{{ currentPlayerName }}'s turn</p>
+            @if (showTurnIndicator()) {
+                <p class="turn-indicator">{{ currentPlayerName() }}'s turn</p>
             }
 
-            @if (winnerName) {
-                <p class="result-indicator">{{ winnerName }} has won</p>
+            @if (winnerName()) {
+                <p class="result-indicator">{{ winnerName() }} has won</p>
             }
 
-            @if (gameState.draw) {
+            @if (gameState().draw) {
                 <p class="result-indicator">The game is a draw</p>
             }
 
             <div class="board" aria-label="Game board">
-                @for (cell of gameState.board; track $index) {
+                @for (cell of gameState().board; track $index) {
                     <button
                         type="button"
                         class="board-cell"
                         [class.winning-cell]="isWinningCell($index)"
                         [attr.data-cell-index]="$index"
                         [attr.aria-label]="'Board cell ' + ($index + 1)"
-                        [disabled]="moveInProgress || setupInProgress"
+                        [disabled]="moveInProgress() || setupInProgress()"
                         (click)="placeSymbol($index)">
                         {{ cell }}
                     </button>
                 }
             </div>
 
-            @if (errorMessage) {
-                <p class="error" role="alert">{{ errorMessage }}</p>
+            @if (errorMessage()) {
+                <p class="error" role="alert">{{ errorMessage() }}</p>
             }
 
-            <button type="button" class="secondary" [disabled]="setupInProgress" (click)="restartGame()">New Game</button>
+            <button type="button" class="secondary" [disabled]="setupInProgress()" (click)="restartGame()">New Game</button>
         </section>
     `,
     styleUrl: './game-board.component.scss',
 })
-export class GameBoardComponent implements OnChanges, OnDestroy {
+export class GameBoardComponent implements OnDestroy {
     private readonly gameService = inject(GameService);
-    private readonly cdr = inject(ChangeDetectorRef);
     private readonly cancelMoveRequests$ = new Subject<void>();
     private setupRequestId = 0;
 
-    @Input({ required: true }) initialState!: GameState;
+    readonly initialState = input.required<GameState>();
 
-    gameState!: GameState;
-    errorMessage = '';
-    moveInProgress = false;
-    setupInProgress = false;
-    currentPlayerName = '';
-    winnerName = '';
-    showTurnIndicator = false;
+    readonly gameState = signal<GameState>(null!);
+    readonly errorMessage = signal('');
+    readonly moveInProgress = signal(false);
+    readonly setupInProgress = signal(false);
 
-    ngOnChanges(): void {
-        this.applyGameState(this.initialState);
+    readonly currentPlayerName = computed(() => {
+        const state = this.gameState();
+        return state?.currentPlayer === 'X' ? state.player1.name
+            : state?.currentPlayer === 'O' ? state.player2.name : '';
+    });
+
+    readonly winnerName = computed(() => {
+        const state = this.gameState();
+        return state?.winner === 'X' ? state.player1.name
+            : state?.winner === 'O' ? state.player2.name : '';
+    });
+
+    readonly showTurnIndicator = computed(() => {
+        const state = this.gameState();
+        return !!state && !state.winner && !state.draw && !!state.currentPlayer;
+    });
+
+    constructor() {
+        effect(() => {
+            this.applyGameState(this.initialState());
+        });
     }
 
     ngOnDestroy(): void {
@@ -76,38 +91,35 @@ export class GameBoardComponent implements OnChanges, OnDestroy {
     }
 
     placeSymbol(cellIndex: number): void {
-        if (this.moveInProgress || this.setupInProgress) {
+        if (this.moveInProgress() || this.setupInProgress()) {
             return;
         }
 
-        this.errorMessage = '';
-        this.moveInProgress = true;
-        this.cdr.markForCheck();
+        this.errorMessage.set('');
+        this.moveInProgress.set(true);
 
-        this.gameService.placeSymbol(this.gameState, cellIndex)
+        this.gameService.placeSymbol(this.gameState(), cellIndex)
             .pipe(timeout(8000), takeUntil(this.cancelMoveRequests$), finalize(() => {
-                this.moveInProgress = false;
-                this.cdr.markForCheck();
+                this.moveInProgress.set(false);
             }))
             .subscribe({
                 next: (state) => {
                     this.applyGameState(state);
                 },
                 error: (err) => {
-                    this.errorMessage = err.error?.message ?? 'Failed to place symbol. The move request timed out or could not reach the server.';
-                    this.cdr.markForCheck();
+                    this.errorMessage.set(err.error?.message ?? 'Failed to place symbol. The move request timed out or could not reach the server.');
                 },
             });
     }
 
     restartGame(): void {
-        const player1 = this.gameState.player1.name;
-        const player2 = this.gameState.player2.name;
+        const player1 = this.gameState().player1.name;
+        const player2 = this.gameState().player2.name;
 
         this.cancelMoveRequests$.next();
-        this.errorMessage = '';
-        this.moveInProgress = false;
-        this.setupInProgress = true;
+        this.errorMessage.set('');
+        this.moveInProgress.set(false);
+        this.setupInProgress.set(true);
         const requestId = ++this.setupRequestId;
 
         this.applyGameState(this.createInitialGameState(player1, player2));
@@ -115,8 +127,7 @@ export class GameBoardComponent implements OnChanges, OnDestroy {
         this.gameService.setupGame(player1, player2)
             .pipe(timeout(8000), finalize(() => {
                 if (requestId === this.setupRequestId) {
-                    this.setupInProgress = false;
-                    this.cdr.markForCheck();
+                    this.setupInProgress.set(false);
                 }
             }))
             .subscribe({
@@ -130,34 +141,20 @@ export class GameBoardComponent implements OnChanges, OnDestroy {
                     if (requestId !== this.setupRequestId) {
                         return;
                     }
-                    this.errorMessage = err.error?.message ?? 'Failed to start the game. The request timed out or could not reach the server.';
-                    this.cdr.markForCheck();
+                    this.errorMessage.set(err.error?.message ?? 'Failed to start the game. The request timed out or could not reach the server.');
                 },
             });
     }
 
     isWinningCell(index: number): boolean {
-        return this.gameState.winningCells.includes(index);
+        return this.gameState().winningCells.includes(index);
     }
 
     applyGameState(state: GameState): void {
-        const normalizedState: GameState = {
+        this.gameState.set({
             ...state,
             winningCells: Array.isArray(state.winningCells) ? state.winningCells : [],
-        };
-        this.gameState = normalizedState;
-        this.currentPlayerName = normalizedState.currentPlayer === 'X'
-            ? normalizedState.player1.name
-            : normalizedState.currentPlayer === 'O'
-                ? normalizedState.player2.name
-                : '';
-        this.winnerName = normalizedState.winner === 'X'
-            ? normalizedState.player1.name
-            : normalizedState.winner === 'O'
-                ? normalizedState.player2.name
-                : '';
-        this.showTurnIndicator = !normalizedState.winner && !normalizedState.draw && !!normalizedState.currentPlayer;
-        this.cdr.markForCheck();
+        });
     }
 
     private createInitialGameState(player1Name: string, player2Name: string): GameState {

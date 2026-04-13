@@ -105,3 +105,7 @@ cd frontend && ng build
 ## Java Coding Guidelines
 
 Follow the authoritative Java rules in `.github/instructions/java.instructions.md`.
+
+## TypeScript Coding Guidelines
+
+Follow the authoritative TypeScript rules in `.github/instructions/typescript.instructions.md`.

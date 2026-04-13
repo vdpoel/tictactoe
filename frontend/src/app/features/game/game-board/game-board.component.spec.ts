@@ -34,8 +34,7 @@ describe('GameBoardComponent', () => {
 
     function createFixture(state: GameState = baseGameState) {
         const fixture = TestBed.createComponent(GameBoardComponent);
-        fixture.componentInstance.initialState = state;
-        fixture.componentInstance.ngOnChanges();
+        fixture.componentRef.setInput('initialState', state);
         fixture.detectChanges();
         return fixture;
     }
@@ -43,54 +42,54 @@ describe('GameBoardComponent', () => {
     describe('applyGameState()', () => {
         it('sets currentPlayerName to player1 when currentPlayer is X', () => {
             const fixture = createFixture({ ...baseGameState, currentPlayer: 'X' });
-            expect(fixture.componentInstance.currentPlayerName).toBe('Alice');
+            expect(fixture.componentInstance.currentPlayerName()).toBe('Alice');
         });
 
         it('sets currentPlayerName to player2 when currentPlayer is O', () => {
             const fixture = createFixture({ ...baseGameState, currentPlayer: 'O' });
-            expect(fixture.componentInstance.currentPlayerName).toBe('Bob');
+            expect(fixture.componentInstance.currentPlayerName()).toBe('Bob');
         });
 
         it('sets currentPlayerName to empty string when there is no current player', () => {
             const fixture = createFixture({ ...baseGameState, currentPlayer: null });
-            expect(fixture.componentInstance.currentPlayerName).toBe('');
+            expect(fixture.componentInstance.currentPlayerName()).toBe('');
         });
 
         it('sets winnerName to player1 name when winner is X', () => {
             const fixture = createFixture({ ...baseGameState, winner: 'X', currentPlayer: null });
-            expect(fixture.componentInstance.winnerName).toBe('Alice');
+            expect(fixture.componentInstance.winnerName()).toBe('Alice');
         });
 
         it('sets winnerName to player2 name when winner is O', () => {
             const fixture = createFixture({ ...baseGameState, winner: 'O', currentPlayer: null });
-            expect(fixture.componentInstance.winnerName).toBe('Bob');
+            expect(fixture.componentInstance.winnerName()).toBe('Bob');
         });
 
         it('sets winnerName to empty string when there is no winner', () => {
             const fixture = createFixture({ ...baseGameState, winner: null });
-            expect(fixture.componentInstance.winnerName).toBe('');
+            expect(fixture.componentInstance.winnerName()).toBe('');
         });
 
         it('shows the turn indicator when the game is in progress', () => {
             const fixture = createFixture({ ...baseGameState, currentPlayer: 'X', winner: null, draw: false });
-            expect(fixture.componentInstance.showTurnIndicator).toBe(true);
+            expect(fixture.componentInstance.showTurnIndicator()).toBe(true);
         });
 
         it('hides the turn indicator when there is a winner', () => {
             const fixture = createFixture({ ...baseGameState, winner: 'X', currentPlayer: null });
-            expect(fixture.componentInstance.showTurnIndicator).toBe(false);
+            expect(fixture.componentInstance.showTurnIndicator()).toBe(false);
         });
 
         it('hides the turn indicator when the game is a draw', () => {
             const fixture = createFixture({ ...baseGameState, draw: true, currentPlayer: null });
-            expect(fixture.componentInstance.showTurnIndicator).toBe(false);
+            expect(fixture.componentInstance.showTurnIndicator()).toBe(false);
         });
 
         it('normalizes a missing winningCells to an empty array', () => {
             const stateWithoutWinningCells = { ...baseGameState } as any;
             delete stateWithoutWinningCells.winningCells;
             const fixture = createFixture(stateWithoutWinningCells);
-            expect(fixture.componentInstance.gameState.winningCells).toEqual([]);
+            expect(fixture.componentInstance.gameState().winningCells).toEqual([]);
         });
     });
 
@@ -116,7 +115,7 @@ describe('GameBoardComponent', () => {
     describe('placeSymbol()', () => {
         it('does nothing when a move is already in progress', () => {
             const fixture = createFixture();
-            fixture.componentInstance.moveInProgress = true;
+            fixture.componentInstance.moveInProgress.set(true);
 
             fixture.componentInstance.placeSymbol(0);
 
@@ -125,7 +124,7 @@ describe('GameBoardComponent', () => {
 
         it('does nothing when setup is in progress', () => {
             const fixture = createFixture();
-            fixture.componentInstance.setupInProgress = true;
+            fixture.componentInstance.setupInProgress.set(true);
 
             fixture.componentInstance.placeSymbol(0);
 
@@ -136,7 +135,7 @@ describe('GameBoardComponent', () => {
             const nextState = { ...baseGameState, board: ['X', '', '', '', '', '', '', '', ''], currentPlayer: 'O' as const };
             mockGameService.placeSymbol.mockReturnValue(of(nextState));
             const fixture = createFixture();
-            const stateAtCallTime = fixture.componentInstance.gameState;
+            const stateAtCallTime = fixture.componentInstance.gameState();
 
             fixture.componentInstance.placeSymbol(0);
 
@@ -150,8 +149,8 @@ describe('GameBoardComponent', () => {
 
             fixture.componentInstance.placeSymbol(0);
 
-            expect(fixture.componentInstance.gameState.board[0]).toBe('X');
-            expect(fixture.componentInstance.currentPlayerName).toBe('Bob');
+            expect(fixture.componentInstance.gameState().board[0]).toBe('X');
+            expect(fixture.componentInstance.currentPlayerName()).toBe('Bob');
         });
 
         it('shows the server error message on failure', () => {
@@ -162,7 +161,7 @@ describe('GameBoardComponent', () => {
 
             fixture.componentInstance.placeSymbol(0);
 
-            expect(fixture.componentInstance.errorMessage).toBe('Cell is already taken');
+            expect(fixture.componentInstance.errorMessage()).toBe('Cell is already taken');
         });
 
         it('shows a fallback error message when the server error has no message', () => {
@@ -171,7 +170,7 @@ describe('GameBoardComponent', () => {
 
             fixture.componentInstance.placeSymbol(0);
 
-            expect(fixture.componentInstance.errorMessage).toContain('Failed to place symbol');
+            expect(fixture.componentInstance.errorMessage()).toContain('Failed to place symbol');
         });
     });
 
@@ -197,7 +196,7 @@ describe('GameBoardComponent', () => {
 
             fixture.componentInstance.restartGame();
 
-            expect(fixture.componentInstance.gameState.board).toEqual(['', '', '', '', '', '', '', '', '']);
+            expect(fixture.componentInstance.gameState().board).toEqual(['', '', '', '', '', '', '', '', '']);
             pending$.complete();
         });
 
@@ -208,8 +207,8 @@ describe('GameBoardComponent', () => {
 
             fixture.componentInstance.restartGame();
 
-            expect(fixture.componentInstance.gameState.currentPlayer).toBe('X');
-            expect(fixture.componentInstance.winnerName).toBe('');
+            expect(fixture.componentInstance.gameState().currentPlayer).toBe('X');
+            expect(fixture.componentInstance.winnerName()).toBe('');
         });
 
         it('shows the server error message on failure', () => {
@@ -220,7 +219,7 @@ describe('GameBoardComponent', () => {
 
             fixture.componentInstance.restartGame();
 
-            expect(fixture.componentInstance.errorMessage).toBe('Server error');
+            expect(fixture.componentInstance.errorMessage()).toBe('Server error');
         });
 
         it('ignores a stale response when a newer restart was triggered', () => {
@@ -242,7 +241,7 @@ describe('GameBoardComponent', () => {
             firstCall$.complete();
 
             // The second restart's state (X) should win, not the stale one (O)
-            expect(fixture.componentInstance.gameState.currentPlayer).toBe('X');
+            expect(fixture.componentInstance.gameState().currentPlayer).toBe('X');
         });
     });
 });

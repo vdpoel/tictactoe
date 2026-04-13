@@ -39,33 +39,33 @@ describe('PlayerSetupComponent', () => {
     describe('canStart', () => {
         it('is false when both names are empty', () => {
             const fixture = createFixture();
-            expect(fixture.componentInstance.canStart).toBe(false);
+            expect(fixture.componentInstance.canStart()).toBe(false);
         });
 
         it('is false when only player1 has a name', () => {
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = 'Alice';
-            expect(fixture.componentInstance.canStart).toBe(false);
+            fixture.componentInstance.player1Name.set('Alice');
+            expect(fixture.componentInstance.canStart()).toBe(false);
         });
 
         it('is false when only player2 has a name', () => {
             const fixture = createFixture();
-            fixture.componentInstance.player2Name = 'Bob';
-            expect(fixture.componentInstance.canStart).toBe(false);
+            fixture.componentInstance.player2Name.set('Bob');
+            expect(fixture.componentInstance.canStart()).toBe(false);
         });
 
         it('is false when both names are whitespace only', () => {
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = '   ';
-            fixture.componentInstance.player2Name = '   ';
-            expect(fixture.componentInstance.canStart).toBe(false);
+            fixture.componentInstance.player1Name.set('   ');
+            fixture.componentInstance.player2Name.set('   ');
+            expect(fixture.componentInstance.canStart()).toBe(false);
         });
 
         it('is true when both names are filled', () => {
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = 'Alice';
-            fixture.componentInstance.player2Name = 'Bob';
-            expect(fixture.componentInstance.canStart).toBe(true);
+            fixture.componentInstance.player1Name.set('Alice');
+            fixture.componentInstance.player2Name.set('Bob');
+            expect(fixture.componentInstance.canStart()).toBe(true);
         });
     });
 
@@ -90,9 +90,9 @@ describe('PlayerSetupComponent', () => {
 
         it('is disabled while the request is in flight', () => {
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = 'Alice';
-            fixture.componentInstance.player2Name = 'Bob';
-            fixture.componentInstance.setupInProgress = true;
+            fixture.componentInstance.player1Name.set('Alice');
+            fixture.componentInstance.player2Name.set('Bob');
+            fixture.componentInstance.setupInProgress.set(true);
             fixture.detectChanges();
             expect(getStartButton(fixture).disabled).toBe(true);
         });
@@ -108,8 +108,8 @@ describe('PlayerSetupComponent', () => {
         it('calls setupGame with trimmed player names', () => {
             mockGameService.setupGame.mockReturnValue(of(mockGameState));
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = '  Alice  ';
-            fixture.componentInstance.player2Name = '  Bob  ';
+            fixture.componentInstance.player1Name.set('  Alice  ');
+            fixture.componentInstance.player2Name.set('  Bob  ');
 
             fixture.componentInstance.startGame();
 
@@ -119,13 +119,13 @@ describe('PlayerSetupComponent', () => {
         it('sets gameState and renders the game board on success', () => {
             mockGameService.setupGame.mockReturnValue(of(mockGameState));
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = 'Alice';
-            fixture.componentInstance.player2Name = 'Bob';
+            fixture.componentInstance.player1Name.set('Alice');
+            fixture.componentInstance.player2Name.set('Bob');
 
             fixture.componentInstance.startGame();
             fixture.detectChanges();
 
-            expect(fixture.componentInstance.gameState).toEqual(mockGameState);
+            expect(fixture.componentInstance.gameState()).toEqual(mockGameState);
             expect(fixture.nativeElement.querySelector('app-game-board')).not.toBeNull();
         });
 
@@ -134,8 +134,8 @@ describe('PlayerSetupComponent', () => {
                 throwError(() => ({ error: { message: 'Names cannot be blank' } }))
             );
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = 'Alice';
-            fixture.componentInstance.player2Name = 'Bob';
+            fixture.componentInstance.player1Name.set('Alice');
+            fixture.componentInstance.player2Name.set('Bob');
 
             fixture.componentInstance.startGame();
             fixture.detectChanges();
@@ -147,12 +147,12 @@ describe('PlayerSetupComponent', () => {
         it('shows a fallback error message when the server error has no message', () => {
             mockGameService.setupGame.mockReturnValue(throwError(() => ({})));
             const fixture = createFixture();
-            fixture.componentInstance.player1Name = 'Alice';
-            fixture.componentInstance.player2Name = 'Bob';
+            fixture.componentInstance.player1Name.set('Alice');
+            fixture.componentInstance.player2Name.set('Bob');
 
             fixture.componentInstance.startGame();
 
-            expect(fixture.componentInstance.errorMessage).toContain('Failed to start the game');
+            expect(fixture.componentInstance.errorMessage()).toContain('Failed to start the game');
         });
     });
 });
