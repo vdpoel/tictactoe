@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "outDir": "./out-tsc/cucumber"
+    "outDir": "./out-tsc/cucumber",
+    "useDefineForClassFields": false
   },
   "include": [
     "e2e/**/*.ts",

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Subject, finalize, takeUntil, timeout } from 'rxjs';
 import { GameService } from '../game.service';
 import { GameState } from '../models';
@@ -56,7 +56,14 @@ export class GameBoardComponent implements OnDestroy {
     private readonly cancelMoveRequests$ = new Subject<void>();
     private setupRequestId = 0;
 
-    readonly initialState = input.required<GameState>();
+    // @Input() decorator is used instead of input() signal because the Cucumber e2e suite
+    // runs Angular in JIT mode (ts-node) without the Angular compiler transforms. Signal
+    // inputs are not recognised as bindable template properties in that context (NG0303).
+    // The setter ensures applyGameState() is called whenever Angular sets or updates the value.
+    @Input({ required: true })
+    set initialState(state: GameState) {
+        this.applyGameState(state);
+    }
 
     readonly gameState = signal<GameState>(null!);
     readonly errorMessage = signal('');
@@ -79,12 +86,6 @@ export class GameBoardComponent implements OnDestroy {
         const state = this.gameState();
         return !!state && !state.winner && !state.draw && !!state.currentPlayer;
     });
-
-    constructor() {
-        effect(() => {
-            this.applyGameState(this.initialState());
-        });
-    }
 
     ngOnDestroy(): void {
         this.cancelMoveRequests$.complete();

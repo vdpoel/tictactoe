@@ -24,7 +24,7 @@ These are the general guidelines for writing JavaScript and TypeScript code.
 ## Components
 - Create reusable components in the appropriate feature or shared directory
 - Use standalone components (`standalone: true`) by default
-- Use `input()` and `output()` signals instead of `@Input()` and `@Output()` decorators
+- Use `input()` and `output()` signals instead of `@Input()` and `@Output()` decorators, **except** for components exercised by Cucumber step definitions: use `@Input({ required: true })` with a setter there instead
 - Use `model()` for two-way bindable inputs instead of a manual `@Input`/`@Output` pair
 - Implement proper component naming (PascalCase class, kebab-case selector)
 - Use `OnPush` change detection strategy for performance
@@ -39,7 +39,7 @@ These are the general guidelines for writing JavaScript and TypeScript code.
 - Use Angular built-in services (e.g. `HttpClient`, `Router`) via `inject()`
 
 ## State Management
-- Prefer Angular signals (`signal()`, `computed()`, `effect()`) for component and local state
+- Prefer Angular signals (`signal()`, `computed()`, `effect()`) for component and local state, except in components covered by the Cucumber behaviour tests (see the JIT exception in the Components section above)
 - Use a signal-based service for shared state across components
 - Avoid global mutable state; prefer co-locating state with the component or feature that owns it
 - Do not use `BehaviorSubject` for simple state that signals can handle

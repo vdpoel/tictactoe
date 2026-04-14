@@ -13,10 +13,10 @@ When('Player 2 enters the name {string}', function (name: string) {
 });
 
 Then('the names {string} and {string} are stored for the game', function (name1: string, name2: string) {
-    if (ctx.fixture.componentInstance.player1Name !== name1 || ctx.fixture.componentInstance.player2Name !== name2) {
+    if (ctx.fixture.componentInstance.player1Name() !== name1 || ctx.fixture.componentInstance.player2Name() !== name2) {
         throw new Error(
             `Expected names "${name1}" and "${name2}", got ` +
-            `"${ctx.fixture.componentInstance.player1Name}" and "${ctx.fixture.componentInstance.player2Name}"`
+            `"${ctx.fixture.componentInstance.player1Name()}" and "${ctx.fixture.componentInstance.player2Name()}"`
         );
     }
 });
@@ -45,7 +45,7 @@ Given('Player 1 is {string} with symbol {string}', function (name: string, _symb
             ...ctx.lastGameState,
             player1: { ...ctx.lastGameState.player1, name },
         };
-        ctx.fixture.componentInstance.player1Name = name;
+        ctx.fixture.componentInstance.player1Name.set(name);
         gameBoardInstance().applyGameState(ctx.lastGameState);
         ctx.fixture.detectChanges();
         return;
@@ -60,7 +60,7 @@ Given('Player 2 is {string} with symbol {string}', function (name: string, _symb
             ...ctx.lastGameState,
             player2: { ...ctx.lastGameState.player2, name },
         };
-        ctx.fixture.componentInstance.player2Name = name;
+        ctx.fixture.componentInstance.player2Name.set(name);
         gameBoardInstance().applyGameState(ctx.lastGameState);
         ctx.fixture.detectChanges();
         return;

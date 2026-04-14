@@ -68,7 +68,7 @@ Then('any winner or draw message is removed', function () {
 });
 
 Then('no result is displayed', function () {
-    if (gameBoardInstance().winnerName || ctx.lastGameState?.draw) {
+    if (gameBoardInstance().winnerName() || ctx.lastGameState?.draw) {
         throw new Error('Expected no result to be displayed');
     }
 });

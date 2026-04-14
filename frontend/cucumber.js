@@ -5,6 +5,6 @@ module.exports = {
         paths: ['../features/*.feature'],
         require: ['e2e/support/setup.ts', 'e2e/step-definitions/**/*.ts'],
         requireModule: ['ts-node/esm'],
-        format: ['progress-bar', 'html:reports/cucumber-report.html'],
+        format: ['progress-bar', 'html:../reports/frontend/cucumber-report.html'],
     },
 };

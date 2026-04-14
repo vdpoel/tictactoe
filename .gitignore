@@ -12,3 +12,6 @@
 
 # Docker
 .env
+
+# Cucumber reports
+/reports

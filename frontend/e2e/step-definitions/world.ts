@@ -48,8 +48,8 @@ export function newGameButton(): HTMLButtonElement {
 
 export function flushGameSetup(state?: Partial<GameState>): void {
     const defaultState: GameState = {
-        player1: { name: ctx.fixture.componentInstance.player1Name, symbol: 'X' },
-        player2: { name: ctx.fixture.componentInstance.player2Name, symbol: 'O' },
+        player1: { name: ctx.fixture.componentInstance.player1Name(), symbol: 'X' },
+        player2: { name: ctx.fixture.componentInstance.player2Name(), symbol: 'O' },
         currentPlayer: 'X',
         board: Array(9).fill(''),
         winner: null,

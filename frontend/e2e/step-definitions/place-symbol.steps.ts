@@ -127,7 +127,7 @@ Then('no symbol is placed, the X remains in the cell and it stays Bob\'s turn', 
         throw new Error('Expected the existing X to remain in the occupied cell');
     }
 
-    if (gameBoardInstance().currentPlayerName !== 'Bob' || !gameBoardInstance().showTurnIndicator) {
+    if (gameBoardInstance().currentPlayerName() !== 'Bob' || !gameBoardInstance().showTurnIndicator()) {
         throw new Error('Expected it to remain Bob\'s turn');
     }
 });
